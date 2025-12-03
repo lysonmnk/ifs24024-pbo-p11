@@ -11,33 +11,27 @@ import org.springframework.security.web.SecurityFilterChain;
 @Configuration
 @EnableWebSecurity
 public class SecurityConfig {
-        @Bean
-        SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
-                http
-                                .exceptionHandling(ex -> ex
-                                                .authenticationEntryPoint((req, res, e) -> {
-                                                        res.sendRedirect("/auth/login");
-                                                }))
-                                .authorizeHttpRequests(auth -> auth
-                                                .requestMatchers("/auth/**", "/assets/**", "/api/**",
-                                                                "/css/**", "/js/**")
-                                                .permitAll()
-                                                .anyRequest().authenticated())
 
-                                .formLogin(form -> form.disable())
-                                .logout(logout -> logout
-                                                .logoutSuccessUrl("/auth/login")
-                                                .permitAll())
-                                .rememberMe(remember -> remember
-                                                .key("uniqueAndSecret")
-                                                .tokenValiditySeconds(86400) // 24 jam
-                                );
+    @Bean
+    SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
+        http
+            // 1. MATIKAN CSRF (Supaya tombol Login bisa diklik dan tidak error 405)
+            .csrf(csrf -> csrf.disable())
 
-                return http.build();
-        }
+            // 2. IZINKAN SEMUA (Kita sudah pakai AuthInterceptor, jadi ini dilonggarkan saja)
+            .authorizeHttpRequests(auth -> auth
+                .anyRequest().permitAll()
+            )
 
-        @Bean
-        public PasswordEncoder passwordEncoder() {
-                return new BCryptPasswordEncoder();
-        }
+            // 3. Matikan Login Bawaan (Agar tidak bentrok dengan form login kita)
+            .formLogin(form -> form.disable())
+            .logout(logout -> logout.disable());
+
+        return http.build();
+    }
+
+    @Bean
+    public PasswordEncoder passwordEncoder() {
+        return new BCryptPasswordEncoder();
+    }
 }
