@@ -30,62 +30,76 @@ public class AuthInterceptor implements HandlerInterceptor {
     @Override
     public boolean preHandle(HttpServletRequest request, HttpServletResponse response, Object handler)
             throws Exception {
-        
-        // 1. Cek apakah ini halaman yang bebas akses (Login/Register/Gambar)
+        // Skip auth untuk endpoint public
         if (isPublicEndpoint(request)) {
-            return true; // Langsung lolos
+            return true;
         }
 
-        // 2. Cek Token (Biasanya dipakai API)
+        // Ambil bearer token dari header
         String rawAuthToken = request.getHeader("Authorization");
         String token = extractToken(rawAuthToken);
 
-        // =================================================================
-        // 🚨 BAGIAN PENTING: JANGAN ERROR KALAU TOKEN KOSONG!
-        // =================================================================
-        // Kalau token kosong, berarti yang akses adalah BROWSER (Manusia).
-        // Kita Return TRUE (Biarkan lewat).
-        // Nanti 'HomeView' atau 'SecurityConfig' yang akan menyuruh Login.
+        // Validasi token
         if (token == null || token.isEmpty()) {
-            return true; 
+            sendErrorResponse(response, 401, "Token autentikasi tidak ditemukan");
+            return false;
         }
-        // =================================================================
 
-        // 3. Validasi Token (Jika tokennya ada)
+        // Validasi format token JWT
         if (!JwtUtil.validateToken(token, true)) {
-            return true; // Token salah? Biarkan lewat sebagai 'Tamu'
+            sendErrorResponse(response, 401, "Token autentikasi tidak valid");
+            return false;
         }
 
+        // Ekstrak userId dari token
         UUID userId = JwtUtil.extractUserId(token);
-        if (userId == null) return true;
+        if (userId == null) {
+            sendErrorResponse(response, 401, "Format token autentikasi tidak valid");
+            return false;
+        }
 
+        // Cari token di database
         AuthToken authToken = authTokenService.findUserToken(userId, token);
-        if (authToken == null) return true;
+        if (authToken == null) {
+            sendErrorResponse(response, 401, "Token autentikasi sudah expired");
+            return false;
+        }
 
+        // Ambil data user
         User authUser = userService.getUserById(authToken.getUserId());
-        if (authUser == null) return true;
+        if (authUser == null) {
+            sendErrorResponse(response, 404, "User tidak ditemukan");
+            return false;
+        }
 
-        // Set User ke Context
+        // Set user ke auth context
         authContext.setAuthUser(authUser);
         return true;
     }
 
     private String extractToken(String rawAuthToken) {
         if (rawAuthToken != null && rawAuthToken.startsWith("Bearer ")) {
-            return rawAuthToken.substring(7);
+            return rawAuthToken.substring(7); // hapus "Bearer "
         }
         return null;
     }
 
     private boolean isPublicEndpoint(HttpServletRequest request) {
         String path = request.getRequestURI();
-        
-        // Daftar halaman yang boleh lewat tanpa pemeriksaan
-        return path.equals("/") ||            // Dashboard
-               path.startsWith("/auth") ||    // Halaman Login & Register
-               path.startsWith("/css") ||     // File Desain
-               path.startsWith("/js") ||      // File Script
-               path.startsWith("/images") ||  // Gambar
-               path.startsWith("/error");     // Halaman Error
+        // String method = request.getMethod();
+
+        // Endpoint public yang tidak perlu auth
+        return path.startsWith("/api/auth") || path.equals("/error");
+    }
+
+    private void sendErrorResponse(HttpServletResponse response, int status, String message) throws Exception {
+        response.setStatus(status);
+        response.setContentType("application/json");
+        response.setCharacterEncoding("UTF-8");
+
+        String jsonResponse = String.format(
+                "{\"status\":\"fail\",\"message\":\"%s\",\"data\":null}",
+                message);
+        response.getWriter().write(jsonResponse);
     }
 }

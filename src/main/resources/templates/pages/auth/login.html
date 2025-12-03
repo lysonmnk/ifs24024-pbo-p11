@@ -1,45 +1,120 @@
 <!DOCTYPE html>
-<html xmlns:th="http://www.thymeleaf.org" lang="id">
-<head>
-    <meta charset="UTF-8">
-    <title>Masuk - Inventory</title>
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
-</head>
-<body class="bg-light d-flex align-items-center justify-content-center vh-100">
+<html
+  xmlns:th="http://www.thymeleaf.org"
+  xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout"
+  layout:decorate="~{layouts/base}"
+>
+  <head>
+    <title>Masuk - Spring Boot Todolist</title>
+  </head>
+  <body>
+    <div layout:fragment="content" class="mt-5">
+      <form
+        th:action="@{/auth/login/post}"
+        method="post"
+        th:object="${loginForm}"
+      >
+        <div class="card mx-auto" style="max-width: 360px">
+          <div class="card-body">
+            <div>
+              <div class="text-center">
+                <img
+                  th:src="@{/assets/images/logo.png}"
+                  alt="Logo"
+                  width="64"
+                />
+                <hr />
+                <h5>Masuk</h5>
+                <span class="text-muted">
+                  Masuk menggunakan kredensial akun Anda untuk melanjutkan
+                </span>
+                <hr />
+              </div>
 
-    <div class="card p-4 shadow-sm" style="width: 100%; max-width: 400px;">
-        <h3 class="text-center text-primary mb-3">📦 Login</h3>
+              <!-- Pesan Error Global -->
+              <div
+                th:if="${#fields.hasGlobalErrors()}"
+                class="alert alert-danger"
+              >
+                <th:block
+                  th:each="err : ${#fields.globalErrors()}"
+                  th:text="${err}"
+                ></th:block>
+              </div>
 
-        <!-- Pesan Error -->
-        <div th:if="${error}" class="alert alert-danger" th:text="${error}"></div>
-        <!-- Pesan Sukses -->
-        <div th:if="${success}" class="alert alert-success" th:text="${success}"></div>
+              <!-- Alamat Email -->
+              <div class="form-group mb-3">
+                <label for="inputEmail">Email</label>
+                <input
+                  type="email"
+                  class="form-control"
+                  id="inputEmail"
+                  th:field="*{email}"
+                  th:classappend="${#fields.hasErrors('email')} ? 'is-invalid'"
+                  autocomplete="email"
+                />
+                <div
+                  th:if="${#fields.hasErrors('email')}"
+                  class="invalid-feedback"
+                >
+                  <th:block
+                    th:each="err : ${#fields.errors('email')}"
+                    th:text="${err}"
+                  ></th:block>
+                </div>
+              </div>
 
-        <!-- FORM PENTING -->
-        <!-- 1. action: Harus ke /auth/login -->
-        <!-- 2. method: Harus POST -->
-        <!-- 3. object: Harus loginForm -->
-        <form th:action="@{/auth/login}" th:object="${loginForm}" method="post">
-            
-            <div class="mb-3">
-                <label>Email</label>
-                <!-- field: Harus *{email} -->
-                <input type="text" class="form-control" th:field="*{email}" placeholder="admin@test.com" required>
+              <!-- Kata Sandi -->
+              <div class="form-group mb-3">
+                <label for="inputPassword">Kata Sandi</label>
+                <input
+                  type="password"
+                  class="form-control"
+                  id="inputPassword"
+                  th:field="*{password}"
+                  th:classappend="${#fields.hasErrors('password')} ? 'is-invalid'"
+                  autocomplete="current-password"
+                />
+                <div
+                  th:if="${#fields.hasErrors('password')}"
+                  class="invalid-feedback"
+                >
+                  <th:block
+                    th:each="err : ${#fields.errors('password')}"
+                    th:text="${err}"
+                  ></th:block>
+                </div>
+              </div>
+
+              <!-- Remember Me -->
+              <div class="form-group mb-3 form-check">
+                <input
+                  type="checkbox"
+                  class="form-check-input"
+                  id="optionRememberMe"
+                  th:field="*{rememberMe}"
+                />
+                <label class="form-check-label" for="optionRememberMe"
+                  >Ingat saya</label
+                >
+              </div>
+
+              <!-- Tombol Masuk -->
+              <div class="form-group mt-3 text-end">
+                <button type="submit" class="btn btn-primary btn-block">
+                  Masuk
+                </button>
+              </div>
+
+              <hr />
+              <p class="text-center">
+                Belum memiliki akun?
+                <a th:href="@{/auth/register}">Daftar</a>
+              </p>
             </div>
-
-            <div class="mb-3">
-                <label>Password</label>
-                <!-- field: Harus *{password} -->
-                <input type="password" class="form-control" th:field="*{password}" required>
-            </div>
-
-            <button type="submit" class="btn btn-primary w-100">Masuk</button>
-        </form>
-
-        <div class="text-center mt-3">
-            <a th:href="@{/auth/register}">Belum punya akun? Daftar</a>
+          </div>
         </div>
+      </form>
     </div>
-
-</body>
+  </body>
 </html>
