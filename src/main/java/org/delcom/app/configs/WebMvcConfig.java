@@ -15,8 +15,19 @@ public class WebMvcConfig implements WebMvcConfigurer {
     @Override
     public void addInterceptors(InterceptorRegistry registry) {
         registry.addInterceptor(authInterceptor)
-                .addPathPatterns("/api/**") // Terapkan ke semua endpoint /api
-                .excludePathPatterns("/api/auth/**") // Kecuali endpoint auth
-                .excludePathPatterns("/api/public/**"); // Dan endpoint public
+                // 1. UBAH CAKUPAN: Terapkan ke SEMUA endpoint (Web & API)
+                // Kalau cuma "/api/**", nanti Dashboard ("/") tidak akan dicek keamanannya.
+                .addPathPatterns("/**") 
+                
+                // 2. KODE LAMA KAMU (DIPERTAHANKAN)
+                .excludePathPatterns("/api/auth/**") 
+                .excludePathPatterns("/api/public/**")
+
+                // 3. TAMBAHAN WAJIB UNTUK WEB (Supaya Login & Tampilan tidak rusak)
+                .excludePathPatterns("/auth/**")   // Halaman Login & Register Web
+                .excludePathPatterns("/css/**")    // File CSS (Desain)
+                .excludePathPatterns("/js/**")     // File JavaScript
+                .excludePathPatterns("/images/**") // Gambar
+                .excludePathPatterns("/error");    // Halaman Error Default
     }
 }
